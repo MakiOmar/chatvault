@@ -1,0 +1,15 @@
+# ChatVault API — production Node.js image
+FROM node:20-alpine AS base
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+
+RUN npm ci --omit=dev
+
+COPY server ./server
+
+ENV NODE_ENV=production
+EXPOSE 3001
+
+CMD ["node", "server/index.js"]

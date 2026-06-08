@@ -1,0 +1,134 @@
+# =============================================================================
+# ChatVault Web — .gitignore
+# React (Vite) + Node.js/Express + MySQL + Docker
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Dependencies
+# -----------------------------------------------------------------------------
+node_modules/
+
+# -----------------------------------------------------------------------------
+# Build & bundler output
+# -----------------------------------------------------------------------------
+dist/
+dist-ssr/
+build/
+.vite/
+*.tsbuildinfo
+
+# -----------------------------------------------------------------------------
+# Environment & secrets (never commit real credentials)
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env*.example
+!.env.docker.example
+
+# Keys, certs, and credential files
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+credentials.json
+secrets.json
+
+# -----------------------------------------------------------------------------
+# User data & runtime storage (WhatsApp exports — sensitive PII)
+# -----------------------------------------------------------------------------
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Local database dumps (keep server/config/schema.sql tracked)
+*.sql.gz
+dump*.sql
+backups/
+
+# -----------------------------------------------------------------------------
+# Logs & debug output
+# -----------------------------------------------------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# -----------------------------------------------------------------------------
+# Testing & coverage
+# -----------------------------------------------------------------------------
+coverage/
+.nyc_output/
+*.lcov
+.jest/
+
+# -----------------------------------------------------------------------------
+# Caches & temp files
+# -----------------------------------------------------------------------------
+.cache/
+.parcel-cache/
+.turbo/
+.temp/
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+*~
+
+# -----------------------------------------------------------------------------
+# OS-generated files
+# -----------------------------------------------------------------------------
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+
+# -----------------------------------------------------------------------------
+# IDE & editor
+# -----------------------------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.sublime-project
+*.sublime-workspace
+.cursor/
+
+# -----------------------------------------------------------------------------
+# Docker (local overrides only — compose files stay tracked)
+# -----------------------------------------------------------------------------
+docker-compose.override.yml
+docker-compose.*.local.yml
+.docker/
+
+# -----------------------------------------------------------------------------
+# Package manager (optional local stores)
+# -----------------------------------------------------------------------------
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# -----------------------------------------------------------------------------
+# Misc
+# -----------------------------------------------------------------------------
+*.local
+.eslintcache
+.stylelintcache
+*.pid
+*.seed
