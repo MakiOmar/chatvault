@@ -27,25 +27,33 @@ Uploaded WhatsApp exports and extracted media are stored in a Docker volume (`up
 - [Docker Engine](https://docs.docker.com/engine/install/) 24+
 - [Docker Compose plugin](https://docs.docker.com/compose/install/) v2+
 
-Quick install (Ubuntu):
+Quick install as **root** (e.g. `root@vmi3356488:~#`):
 
 ```bash
 curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-# Log out and back in so the docker group applies
 docker --version
 docker compose version
 ```
 
+> For a full copy-paste walkthrough (root, `/opt/apps/chatvault`, port **8080**), use [VPS-SETUP-CHECKLIST.md](./VPS-SETUP-CHECKLIST.md).
+
 ### Firewall
 
-Open HTTP (and HTTPS if you add TLS):
+For IP + port access (recommended when hosting multiple apps on one VPS):
 
 ```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw enable
+ufw allow OpenSSH
+ufw allow 8080/tcp
+ufw enable
+```
+
+Set `HTTP_PORT=8080` in `.env`. Access: `http://YOUR_VPS_IP:8080`.
+
+For domain on port 80 later:
+
+```bash
+ufw allow 80/tcp
+ufw allow 443/tcp
 ```
 
 ---
@@ -67,27 +75,37 @@ All services communicate on an internal Docker network. Only the **web** contain
 
 ## Quick Start
 
-### 1. Clone the project
+Exact steps for **root** on the VPS are in [VPS-SETUP-CHECKLIST.md](./VPS-SETUP-CHECKLIST.md). Summary:
+
+### 1. App directory
 
 ```bash
-git clone <your-repo-url> chatvault
-cd chatvault
+mkdir -p /opt/apps/chatvault
+cd /opt/apps/chatvault
 ```
 
-### 2. Configure environment
+Clone or upload the full project into this folder.
+
+### 2. Configure environment (database is auto-created)
 
 ```bash
 cp .env.docker.example .env
-nano .env   # or vim / your editor
+openssl rand -base64 48
+nano .env
 ```
+
+No manual MySQL install or `CREATE DATABASE` is required. On first `docker compose up`, the **mysql** container creates `DB_NAME` and `DB_USER` from `.env`; the **app** container runs `schema.sql` to create tables.
+
+If passwords contain `#` or `$`, wrap them in double quotes in `.env` (otherwise `#` starts a comment).
 
 **Required changes** before going live:
 
 | Variable | Description |
 |----------|-------------|
-| `JWT_SECRET` | Long random string (e.g. `openssl rand -base64 48`) |
+| `JWT_SECRET` | Output of `openssl rand -base64 48` |
 | `DB_PASSWORD` | Strong password for the `chatvault` MySQL user |
 | `MYSQL_ROOT_PASSWORD` | Strong root password for MySQL |
+| `HTTP_PORT` | **`8080`** for IP:port access (leaves port 80 free) |
 
 Example:
 
@@ -103,7 +121,7 @@ MYSQL_ROOT_PASSWORD=YourStrongRootPassword456!
 
 JWT_SECRET=paste-output-of-openssl-rand-base64-48-here
 
-HTTP_PORT=80
+HTTP_PORT=8080
 ```
 
 > **Note:** `DB_HOST` must stay `mysql` — that is the Docker Compose service name, not `localhost`.
@@ -111,6 +129,7 @@ HTTP_PORT=80
 ### 3. Build and start
 
 ```bash
+cd /opt/apps/chatvault
 docker compose up -d --build
 ```
 
@@ -119,20 +138,16 @@ First run takes a few minutes (npm install + Vite build inside the image).
 ### 4. Verify
 
 ```bash
-# Container status
 docker compose ps
-
-# API health (via Nginx proxy)
-curl http://localhost/api/health
+curl http://localhost:8080/api/health
 # {"status":"OK","timestamp":"..."}
 
-# View logs
 docker compose logs -f app
 docker compose logs -f web
 docker compose logs -f mysql
 ```
 
-Open `http://YOUR_VPS_IP` in a browser. Register an account and upload a WhatsApp export ZIP.
+Open `http://YOUR_VPS_IP:8080` in a browser. Register an account and upload a WhatsApp export ZIP.
 
 ---
 

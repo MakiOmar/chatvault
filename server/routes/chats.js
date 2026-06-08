@@ -67,7 +67,9 @@ router.get('/:chatId/messages', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Chat not found' });
     }
     
-    const offset = (page - 1) * limit;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
+    const offsetNum = (pageNum - 1) * limitNum;
     let whereClause = 'WHERE chat_id = ?';
     let params = [chatId];
     
@@ -76,27 +78,28 @@ router.get('/:chatId/messages', authenticateToken, async (req, res) => {
       params.push(`%${search}%`, `%${search}%`);
     }
     
+    // LIMIT/OFFSET cannot use prepared-statement placeholders on MySQL 8 (mysql2 execute)
     const messages = await query(`
       SELECT * FROM messages 
       ${whereClause}
       ORDER BY timestamp ASC
-      LIMIT ? OFFSET ?
-    `, [...params, parseInt(limit), offset]);
+      LIMIT ${limitNum} OFFSET ${offsetNum}
+    `, params);
     
     // Get total count
     const totalResult = await query(`
       SELECT COUNT(*) as total FROM messages ${whereClause}
     `, params);
     
-    const total = totalResult[0].total;
+    const total = Number(totalResult[0].total);
     
     res.json({ 
       messages,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limitNum)
       }
     });
   } catch (error) {
