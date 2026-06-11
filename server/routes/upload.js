@@ -41,7 +41,16 @@ router.post('/', authenticateToken, async (req, res) => {
     const zipEntries = zip.getEntries();
     
     let chatTextFile = null;
+    let chatTextPriority = Number.POSITIVE_INFINITY;
     const mediaFiles = [];
+
+    const getChatTextPriority = (fileName) => {
+      const baseName = path.basename(fileName).toLowerCase();
+      if (baseName === '_chat.txt') return 0;
+      if (baseName.startsWith('whatsapp chat') && baseName.endsWith('.txt')) return 1;
+      if (baseName.endsWith('.txt')) return 2;
+      return Number.POSITIVE_INFINITY;
+    };
 
     // Extract all files
     for (const entry of zipEntries) {
@@ -56,11 +65,13 @@ router.post('/', authenticateToken, async (req, res) => {
       // Write file
       await fs.writeFile(filePath, entry.getData());
       
-      // Identify chat text file
-      if (fileName.toLowerCase().endsWith('.txt')) {
-        chatTextFile = filePath;
+      const textPriority = getChatTextPriority(fileName);
+      if (textPriority < Number.POSITIVE_INFINITY) {
+        if (textPriority < chatTextPriority) {
+          chatTextFile = filePath;
+          chatTextPriority = textPriority;
+        }
       } else {
-        // It's a media file
         mediaFiles.push({
           filename: fileName,
           path: filePath,

@@ -52,6 +52,7 @@ const MESSAGE_PATTERNS = [
 const MEDIA_INDICATORS = [
   /<media omitted>/i,
   /\(file attached\)/i,
+  /<attached:\s*[^>]+>/i,
   /image omitted/i,
   /video omitted/i,
   /audio omitted/i,
@@ -61,6 +62,8 @@ const MEDIA_INDICATORS = [
   /gif omitted/i,
   /<(image|video|audio|document|sticker) omitted>/i
 ];
+
+const ATTACHED_FILE_REGEX = /<attached:\s*([^>]+)>/gi;
 
 const SYSTEM_LINE_MARKERS = [
   'end-to-end encrypted',
@@ -158,9 +161,21 @@ function isMediaContent(content) {
   return MEDIA_INDICATORS.some((re) => re.test(content));
 }
 
+export function extractAttachedFilenames(content) {
+  const names = [];
+  const regex = new RegExp(ATTACHED_FILE_REGEX.source, 'gi');
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    names.push(match[1].trim());
+  }
+  return names;
+}
+
 function cleanMessageContent(content) {
   return content
     .replace(/<media omitted>/gi, '')
+    .replace(/<attached:\s*[^>]+>/gi, '')
+    .replace(/<This message was edited>/gi, '')
     .replace(/<[^>]+ omitted>/gi, '')
     .replace(/\(file attached\)/gi, '')
     .replace(/\(voice message\)/gi, '')
@@ -170,11 +185,22 @@ function cleanMessageContent(content) {
     .replace(/document omitted/gi, '')
     .replace(/sticker omitted/gi, '')
     .replace(/gif omitted/gi, '')
+    .replace(/[\u200e\u200f\u202a\u202b\u202c\u202d\u202e]/g, '')
+    .replace(/\u202f/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim() || null;
 }
 
 function findMediaFileForMessage(content, mediaFiles) {
+  for (const attachedName of extractAttachedFilenames(content)) {
+    const byAttachedName = mediaFiles.find(
+      (file) => path.basename(file.filename) === attachedName
+    );
+    if (byAttachedName) return byAttachedName;
+  }
+
   const referencedName = content
+    .replace(/<attached:\s*[^>]+>/gi, '')
     .replace(/\(file attached\)/gi, '')
     .replace(/\(voice message\)/gi, '')
     .trim();

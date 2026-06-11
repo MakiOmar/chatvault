@@ -53,7 +53,19 @@ function MessageContent({ message }) {
     )
   }
 
-  return message.content ? <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p> : null
+  if (message.content) {
+    return <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+  }
+
+  if (message.message_type !== 'text') {
+    return (
+      <p className="text-sm text-gray-500 italic">
+        {message.media_filename || 'Media not included in export'}
+      </p>
+    )
+  }
+
+  return null
 }
 
 export default function ChatViewer() {
